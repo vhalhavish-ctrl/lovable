@@ -4,15 +4,20 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents || "{}");
     const expected = PROP.getProperty("SYNC_SHARED_SECRET");
-    if (!expected || body.secret !== expected) return json_({ ok:false, error:"INVALID_SECRET" }, 401);
+    if (!expected || body.secret !== expected) return json_({ ok:false, error:"INVALID_SECRET" });
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const map = { profiles:"MEMBERS", orders:"ORDERS", toppings:"TOPPINGS_50" };
+    const map = {
+      profiles:"MEMBERS",
+      orders:"ORDERS",
+      toppings:"TOPPINGS_50",
+      member_applications:"APPROVALS"
+    };
     const tab = map[body.entity];
-    if (!tab) return json_({ ok:false, error:"ENTITY_NOT_ALLOWED" }, 400);
+    if (!tab) return json_({ ok:false, error:"ENTITY_NOT_ALLOWED" });
     upsertRecord_(ss.getSheetByName(tab), body.record);
-    return json_({ ok:true }, 200);
+    return json_({ ok:true });
   } catch (err) {
-    return json_({ ok:false, error:String(err) }, 500);
+    return json_({ ok:false, error:String(err) });
   }
 }
 
@@ -61,15 +66,18 @@ function syncEditToSupabase(e) {
 function upsertRecord_(sheet, record) {
   if (!sheet) throw new Error("SHEET_NOT_FOUND");
   const headers = headerMap_(sheet);
-  const keyCandidates = ["id","user_id","code","order_id","auth_user_id","topping_code"];
-  let sheetKey = keyCandidates.find(k => headers[k]);
-  let recordKey = sheetKey;
-  if (sheet.getName()==="MEMBERS") { sheetKey="auth_user_id"; recordKey="user_id"; }
-  if (sheet.getName()==="ORDERS") { sheetKey="order_id"; recordKey="id"; }
-  if (sheet.getName()==="TOPPINGS_50") { sheetKey="topping_code"; recordKey="code"; }
-  if (!sheetKey || record[recordKey] == null) throw new Error("PRIMARY_KEY_NOT_FOUND");
 
+  let sheetKey, recordKey;
+  if (sheet.getName()==="MEMBERS") { sheetKey="auth_user_id"; recordKey="user_id"; }
+  else if (sheet.getName()==="ORDERS") { sheetKey="order_id"; recordKey="id"; }
+  else if (sheet.getName()==="TOPPINGS_50") { sheetKey="topping_code"; recordKey="code"; }
+  else if (sheet.getName()==="APPROVALS") { sheetKey="application_id"; recordKey="id"; }
+  else throw new Error("UNSUPPORTED_SHEET");
+
+  if (record[recordKey] == null) throw new Error("PRIMARY_KEY_NOT_FOUND");
   const keyCol = headers[sheetKey];
+  if (!keyCol) throw new Error("PRIMARY_KEY_COLUMN_NOT_FOUND");
+
   const keyValue = String(record[recordKey]);
   const last = Math.max(sheet.getLastRow(),1);
   const values = last > 1 ? sheet.getRange(2,keyCol,last-1,1).getDisplayValues().flat() : [];
@@ -79,8 +87,12 @@ function upsertRecord_(sheet, record) {
   Object.keys(headers).forEach(h => {
     let source = h;
     if (sheet.getName()==="MEMBERS" && h==="auth_user_id") source="user_id";
+    if (sheet.getName()==="MEMBERS" && h==="status") source="membership_status";
     if (sheet.getName()==="ORDERS" && h==="order_id") source="id";
     if (sheet.getName()==="TOPPINGS_50" && h==="topping_code") source="code";
+    if (sheet.getName()==="TOPPINGS_50" && h==="category_th_en") source="category";
+    if (sheet.getName()==="APPROVALS" && h==="application_id") source="id";
+    if (sheet.getName()==="APPROVALS" && h==="submitted_at") source="created_at";
     if (Object.prototype.hasOwnProperty.call(record, source)) sheet.getRange(targetRow,headers[h]).setValue(record[source]);
   });
 }
