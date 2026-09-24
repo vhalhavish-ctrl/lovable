@@ -190,7 +190,7 @@ export default function Page(){
       <div className="hero-copy">
         <span className="badge">8-BIT FOOD • 16-BIT FUN</span>
         <h1>{t.title}</h1><p>{t.sub}</p>
-        <div className="hero-actions"><button className="primary" onClick={()=>setView("order")}>{t.order}</button><button onClick={()=>setView("apply")}>{t.apply}</button></div>
+        <div className="hero-actions"><button className="primary" onClick={()=>setView("order")}>🍳 {t.order}</button><button onClick={()=>setView("apply")}>🧑‍🍳 {t.apply}</button><button onClick={()=>setView("login")}>🔑 {t.login}</button></div>
         <div className="tier-strip">{MENU_TIERS.map(m=><div key={m.code}><b>{m.en}</b><strong>฿{m.price}</strong><small>{m.eggs} EGGS · 5 TOPPINGS</small></div>)}</div>
       </div>
       <div className="game-scene" aria-label="Original pixel food kitchen scene">
@@ -202,20 +202,20 @@ export default function Page(){
     </section>}
 
     {view==="order" && <section className="panel">
-      <h2>{t.order}</h2><h3>{t.pickTier}</h3>
+      <h2>🍳 {t.order} / ORDER NOW</h2><h3>1. {t.pickTier}</h3>
       <div className="tier-grid">{MENU_TIERS.map(m=><button key={m.code} className={"tier-card "+(tier.code===m.code?"selected":"")} onClick={()=>setTier(m)}>
         <PixelIcon kind="egg"/><b>{lang==="th"?m.th:m.en}</b><strong>฿{m.price}</strong><small>{m.eggs} {lang==="th"?"ฟอง":"eggs"} · 5 toppings · {m.rice}g rice</small>
       </button>)}</div>
-      <div className="section-title"><h3>{t.pickTop}</h3><span className="counter-chip">{t.selected} {selected.length}/5</span></div>
+      <div className="section-title"><h3>2. {t.pickTop} <small>• 50 เมนู / 50 Items</small></h3><span className="counter-chip">{t.selected} {selected.length}/5</span></div>
       <div className="topping-grid">{TOPPINGS.map(x=><button key={x.code} className={"topping "+(selected.includes(x.code)?"selected":"")} onClick={()=>toggle(x.code)}>
         <PixelIcon kind={x.category==="protein"?"meat":x.category==="veg"?"veg":"extra"}/><b>{lang==="th"?x.th:x.en}</b><small>{x.code}</small>
       </button>)}</div>
-      <div className="order-review"><div><h3>{t.review}</h3><p><b>{tier.en} · ฿{tier.price}</b> · {tier.eggs} eggs · rice {tier.rice} g</p>
+      <div className="order-review"><div><h3>3. {t.review} / Order Summary</h3><p><b>{tier.en} · ฿{tier.price}</b> · {tier.eggs} eggs · rice {tier.rice} g</p>
         <p>{chosen.map(x=>lang==="th"?x?.th:x?.en).join(" • ")||"—"}</p></div>
         <button disabled={busy||selected.length!==5} className="primary" onClick={submitOrder}>{busy?t.pending:t.submit}</button></div>
     </section>}
 
-    {view==="apply" && <section className="panel narrow"><h2>{t.applyTitle}</h2>
+    {view==="apply" && <section className="panel narrow"><h2>🧑‍🍳 {t.applyTitle} / Join Member (Admin Approval)</h2>
       <label>{t.email}<input value={application.email} type="email" onChange={e=>setApplication({...application,email:e.target.value})}/></label>
       <label>{t.phone}<input value={application.phone} onChange={e=>setApplication({...application,phone:e.target.value})} placeholder="08x... หรือ +66..."/></label>
       <label>{t.nickname}<input value={application.nickname} onChange={e=>setApplication({...application,nickname:e.target.value})}/></label>
@@ -223,7 +223,7 @@ export default function Page(){
       <button className="primary" disabled={busy||!application.email||!application.phone||!application.nickname} onClick={submitApplication}>{busy?t.pending:t.sendApply}</button>
     </section>}
 
-    {view==="login" && <section className="panel narrow"><h2>{t.loginTitle}</h2>
+    {view==="login" && <section className="panel narrow"><h2>📱 {t.loginTitle} / Login with Phone</h2>
       <label>{t.phone}<input value={loginPhone} onChange={e=>setLoginPhone(e.target.value)} placeholder="08x... หรือ +66..."/></label>
       <button onClick={sendOtp} disabled={busy||!loginPhone}>{t.sendOtp}</button>
       <label>{t.otp}<input value={otp} inputMode="numeric" maxLength={6} onChange={e=>setOtp(e.target.value.replace(/\D/g,""))}/></label>
@@ -231,7 +231,7 @@ export default function Page(){
     </section>}
 
     {view==="member" && <section className="panel">
-      <div className="section-title"><h2>{t.member}</h2>{session&&<button onClick={async()=>{await supabase?.auth.signOut();setProfile(null);setHistory([]);}}>{t.signout}</button>}</div>
+      <div className="section-title"><h2>👨‍🍳 {t.member} / Member Profile</h2>{session&&<button onClick={async()=>{await supabase?.auth.signOut();setProfile(null);setHistory([]);}}>{t.signout}</button>}</div>
       {!session?<div className="empty"><PixelIcon kind="ticket"/><p>{lang==="th"?"กรุณาเข้าสู่ระบบ":"Please login"}</p><button onClick={()=>setView("login")}>{t.login}</button></div>:<>
         <div className="profile-card"><PixelIcon kind="chef"/><div className="grow">
           <label>{t.nickname}<input value={profile?.nickname||""} onChange={e=>setProfile({...profile,nickname:e.target.value})}/></label>
@@ -243,7 +243,7 @@ export default function Page(){
     </section>}
 
     {view==="admin" && <section className="panel">
-      <div className="section-title"><h2>{t.admin}</h2><button onClick={loadAdmin} disabled={busy}>↻ {lang==="th"?"โหลดข้อมูล":"Refresh"}</button></div>
+      <div className="section-title"><h2>🛡️ {t.admin} / Member Approval & Order Control</h2><button onClick={loadAdmin} disabled={busy}>↻ {lang==="th"?"โหลดข้อมูล":"Refresh"}</button></div>
       <div className="admin-grid">
         <div><h3>{t.approvals}</h3><div className="list">{applications.length?applications.map(a=><article key={a.id}><b>{a.nickname}</b><span>{a.email} · {a.phone}</span><small>{a.bio}</small><div><button onClick={()=>decide(a,"approved")}>{t.approve}</button><button onClick={()=>decide(a,"rejected")}>{t.reject}</button></div></article>):<p>{t.noData}</p>}</div></div>
         <div><h3>{t.orders}</h3><div className="list">{adminOrders.length?adminOrders.map(o=><article key={o.id}><b>#{o.order_no} · {o.menu_code} · ฿{o.total_thb}</b><select value={o.status} onChange={e=>void setOrderStatus(o,e.target.value)}>{ORDER_STATUSES.map(s=><option key={s}>{s}</option>)}</select><small>{o.member_id}</small></article>):<p>{t.noData}</p>}</div></div>
