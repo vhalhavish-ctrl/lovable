@@ -4,6 +4,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
   const auth = req.headers.get("Authorization");
   if (!auth) return Response.json({ error: "AUTH_REQUIRED" }, { status: 401 });
+
   const url = Deno.env.get("SUPABASE_URL")!;
   const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -19,7 +20,9 @@ Deno.serve(async (req) => {
 
   let query = userClient.from(entity).select(entity === "orders" ? "*,order_items(*)" : "*");
   if (entity === "profiles") query = query.eq("user_id", id);
+  else if (entity === "toppings") query = query.eq("code", id);
   else query = query.eq("id", id);
+
   const { data, error } = await query.maybeSingle();
   if (error || !data) return Response.json({ error: error?.message || "NOT_FOUND" }, { status: 404 });
 
@@ -34,5 +37,5 @@ Deno.serve(async (req) => {
     source_version:(data as any).sync_version ?? null,
     status:res.ok?"OK":"ERROR", error_message:res.ok?null:body.slice(0,500)
   });
-  return Response.json({ ok: res.ok, sheet_status: res.status, sheet_response: body.slice(0,500) }, { status: res.ok ? 200 : 502 });
+  return Response.json({ ok:res.ok, sheet_status:res.status, sheet_response:body.slice(0,500) }, { status: res.ok ? 200 : 502 });
 });
